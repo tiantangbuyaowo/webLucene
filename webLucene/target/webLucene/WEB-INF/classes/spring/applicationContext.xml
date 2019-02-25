@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns:cache="http://www.springframework.org/schema/cache"
+	xmlns:redisson="http://redisson.org/schema/redisson"
+	xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans-3.0.xsd 
+        http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.0.xsd 
+        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context-3.0.xsd
+        http://www.springframework.org/schema/cache 
+        http://www.springframework.org/schema/cache/spring-cache-3.1.xsd
+		http://redisson.org/schema/redisson
+        http://redisson.org/schema/redisson/redisson.xsd
+      ">
+
+	<!-- 开启自动扫描 -->
+	<context:component-scan base-package="org.tj.lucene.*" />
+	<context:annotation-config />
+	<tx:annotation-driven />
+	<import resource="classpath:mybatis-config.xml" />
+
+
+	<!-- 数据源连接信息配置文件 -->
+	<context:property-placeholder location="classpath*:jdbc.properties" />
+	<!-- 数据源配置 -->
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource"
+		destroy-method="close">
+		<property name="driverClass" value="${jdbc.driver}" />
+		<property name="jdbcUrl" value="${jdbc.url}" />
+		<property name="user" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+		<property name="acquireIncrement" value="${jdbc.acquireIncrement}" />
+		<property name="initialPoolSize" value="${jdbc.initialPoolSize}" />
+		<property name="minPoolSize" value="${jdbc.minPoolSize}" />
+		<property name="maxPoolSize" value="${jdbc.maxPoolSize}" />
+		<property name="maxIdleTime" value="${jdbc.maxIdleTime}" />
+		<property name="maxStatements" value="${jdbc.maxStatements}" />
+		<property name="numHelperThreads" value="${jdbc.numHelperThreads}" />
+		<property name="idleConnectionTestPeriod" value="${jdbc.idleConnectionTestPeriod}" />
+	</bean>
+
+	<!-- 配置sqlSessionFactory -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<!-- 自动到mappers包下面去搜索mybatis的映射文件 -->
+		<property name="mapperLocations" value="classpath*:mappers/*.xml" />
+		<!-- 找到定义别名的配置文件 -->
+		<property name="configLocation" value="classpath:mybatis-config.xml" />
+	</bean>
+
+	<!-- 使用Spring的事务管理器 -->
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<!-- aop方式配置事务 -->
+	<!-- 第一种配置事务的方式 ，tx -->
+	<!-- <tx:advice id="txadvice" transaction-manager="transactionManager"> -->
+	<!-- <tx:attributes> -->
+	<!-- <tx:method name="add*" propagation="REQUIRED" rollback-for="Exception" 
+		/> -->
+	<!-- <tx:method name="modify*" propagation="REQUIRED" -->
+	<!-- rollback-for="Exception" /> -->
+	<!-- <tx:method name="del*" propagation="REQUIRED" rollback-for="Exception" 
+		/> -->
+	<!-- <tx:method name="*" propagation="REQUIRED" read-only="true" /> -->
+	<!-- </tx:attributes> -->
+	<!-- </tx:advice> -->
+
+	<!-- <aop:config> -->
+	<!-- <aop:pointcut id="servicecut" expression="execution(* org.tj.service(..))" 
+		/> -->
+	<!-- <aop:advisor pointcut-ref="servicecut" advice-ref="txadvice" /> -->
+	<!-- </aop:config> -->
+
+
+	<!-- 利用MyBatis-Spring的自动装配机制： 自动从org.tj.work.mapper包中寻找接口装配成MapperFactoryBean 
+		有了下面这个配置，那么就不需要像上面那样一个一个的去注册映射器Bean了，大大的减少了工作量 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="org.tj.lucene.mapper" />
+	</bean>
+
+
+	<redisson:client id="redissonClient" name="redissonClient">
+		<!-- 这里的name属性和qualifier子元素不能同时使用。 id和name的属性都可以被用来作为qualifier的备选值。 -->
+		<!--<qualifier value="redisson3"/> -->
+		<redisson:single-server
+
+			idle-connection-timeout="10000" ping-timeout="1000" connect-timeout="10000"
+			timeout="3000" retry-attempts="3" retry-interval="1500" password="jbnshx20120909"
+			subscriptions-per-connection="5" address="redis://192.168.3.166:6379"
+			subscription-connection-minimum-idle-size="1"
+			subscription-connection-pool-size="50" connection-minimum-idle-size="10"
+			connection-pool-size="64" database="0" />
+	</redisson:client>
+
+
+
+</beans>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<process name="jbpm" xmlns="http://jbpm.org/4.4/jpdl">
+	<start g="16,27,48,48" name="提交申请">
+		<transition g="-36,5" name="提交申请" to="提交申请"/>
+	</start>
+	<state g="120,168,109,61" name="提交申请" to="总经理审核">
+      <transition name="部门经理审核" to="部门经理审核" g="-8,-19"/>
+	</state>
+   <end g="864,48,48,48" name="结束"/>
+   <task name="部门经理审核" g="528,168,157,73">
+      <transition name="to 结束" to="结束" g="-61,-21"/>
+   </task>
+</process>
